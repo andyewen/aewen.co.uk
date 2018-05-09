@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>aewen.co.uk</title>
+        <style>
+            html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+            canvas {
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas></canvas>
+        <script>
+            var c = document.getElementsByTagName('canvas')[0];
+            var ctx = c.getContext('2d');
+            var cRect = c.getBoundingClientRect();
+            var w = 12, h = 12;
+            var boxSize = getBoxSize();
+            var boxes = [];
+            var lastFrameTime = new Date();
+
+            for (var j = 0; j < h; j++) {
+                var row = [];
+                for (var i = 0; i < w; i++) {
+                    row.push({n: Math.random() * 0.3, c: ~~(Math.random() * 3)});
+                }
+                boxes.push(row);
+            }
+
+            function getBoxSize() {
+                return Math.max(c.width, c.height) / w;
+            }
+
+            function resizeCanvas() {
+                c.width = window.innerWidth;
+                c.height = window.innerHeight;
+                boxSize = getBoxSize();
+                cRect = c.getBoundingClientRect();
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            c.addEventListener('mousemove', function(e) {
+                var x = e.clientX - cRect.left,
+                    y = e.clientY - cRect.top;
+
+                var denom = Math.max(c.width, c.height);
+
+                var bX = Math.max(0, Math.min(~~((x / denom) * w), w - 1)),
+                    bY = Math.max(0, Math.min(~~((y / denom) * h), h - 1));
+                boxes[bY][bX].n = 0.7;
+            });
+
+            function draw() {
+                var thisFrameTime = new Date();
+                var dt = (thisFrameTime - lastFrameTime) / 1000;
+                lastFrameTime = thisFrameTime;
+                console.log(dt);
+
+                for (var j = 0; j < h; j++) {
+                    for (var i = 0; i < w; i++) {
+                        var box = boxes[j][i];
+                        if (Math.random() < 0.5 * dt) {
+                            box.n = 0.3;
+                            box.c = ~~(Math.random() * 3);
+                        } else {
+                            box.n = Math.max(0, box.n - 0.3 * dt);
+                        }
+
+                        var r, g, b;
+                        // ctx.fillStyle = "rgb(" + n + "," + n + "," + n + ")";
+                        if (box.c) {
+                            r = 30; g = 50 + 130 * box.n; b = 50 + 50 * box.n;
+                        } else {
+                            r = 30; g = 50 + 50 * box.n; b = 50 + 130 * box.n;
+                        }
+
+                        ctx.fillStyle = "rgb(" + ~~r + "," + ~~g + "," + ~~b + ")";
+                        ctx.fillRect(i * boxSize, j * boxSize, boxSize, boxSize);
+                    }
+                }
+                window.requestAnimationFrame(draw);
+            }
+            window.requestAnimationFrame(draw);
+        </script>
+    </body>
+</html>
