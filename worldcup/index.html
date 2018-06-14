@@ -7,7 +7,10 @@
         <style>
             * {
                 font-family: sans-serif;
-                font-size: 18pt;
+            }
+
+            .flag {
+                height: 16px;
             }
         </style>
         <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
@@ -28,7 +31,7 @@
                         <td>{{ person.name }}</td>
                         <td>
                             <div v-for="team in person.teams" :style="{'textDecoration': team.knocked_out ? 'line-through' : 'inherit'}">
-                                {{ team.name }}
+                                {{ team.name }} <img :src="team.flag_url" class="flag"/>
                             </div>
                         </td>
                     </tr>
@@ -38,7 +41,7 @@
             <p>
                 <span v-for="(team, index) in unallocated_teams">
                     <span :style="{'textDecoration': team.knocked_out ? 'line-through' : 'inherit'}">
-                        {{ team.name }}
+                        {{ team.name }} <img :src="team.flag_url" class="flag"/>
                     </span>
                     <span v-if="index + 1 < unallocated_teams.length">, </span>
                 </span>
@@ -56,6 +59,7 @@
                 this.code = code;
                 this.name = name;
                 this.knocked_out = knocked_out;
+                this.flag_url = "flags/" + this.code.toLowerCase() + ".gif";
             }
 
             var app = new Vue({
