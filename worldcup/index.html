@@ -13,6 +13,7 @@
         </script>
 
         <title>World Cup 2018 Sweepstake</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
         <link rel="shortcut icon" href="favicon.ico" />
         <style>
             * {
@@ -36,9 +37,21 @@
                 text-align: left;
             }
 
+            tr:nth-child(1) {
+                width: 40%;
+            }
+
+            tr:nth-child(2) {
+                width: 60%;
+            }
+
             .teams {
                 display: flex;
                 flex-flow: row wrap;
+            }
+
+            .unallocated-teams {
+                margin-top: 16px;
             }
 
             .team {
@@ -46,7 +59,7 @@
                 border-radius: 4px;
                 padding: 4px;
                 margin: 4px;
-                white-space: no-wrap
+                white-space: nowrap
             }
 
             .team.knocked-out {
@@ -71,18 +84,19 @@
             <table>
                 <tbody>
                     <tr v-for="person in people_with_teams">
-                        <td>{{ person.name }}</td>
-                        <td class="teams">
-                            <div v-for="team in person.teams"
-                                 class="team" :class="{'knocked-out': team.knocked_out}">
-                                {{ team.name }} <img :src="team.flag_url" class="flag"/>
+                        <td class="player">{{ person.name }}</td>
+                        <td>
+                            <div class="teams">
+                                <div v-for="team in person.teams"
+                                    class="team" :class="{'knocked-out': team.knocked_out}">
+                                    {{ team.name }} <img :src="team.flag_url" class="flag"/>
+                                </div>
                             </div>
                         </td>
                     </tr>
                 </tbody>
             </table>
-            <h2>Unallocated Teams</h2>
-            <div class="teams">
+            <div class="teams unallocated-teams">
                 <div v-for="(team, index) in unallocated_teams"
                      class="team" :class="{'knocked-out': team.knocked_out}">
                     {{ team.name }} <img :src="team.flag_url" class="flag"/>
