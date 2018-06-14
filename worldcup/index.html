@@ -25,6 +25,11 @@
                 background-color: #111;
             }
 
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
             table {
                 table-layout: fixed;
                 width: 100%;
@@ -37,17 +42,12 @@
                 text-align: left;
             }
 
-            tr:nth-child(1) {
+            tbody td:nth-child(1) {
                 width: 40%;
             }
 
-            tr:nth-child(2) {
+            tbody td:nth-child(2) {
                 width: 60%;
-            }
-
-            .teams {
-                display: flex;
-                flex-flow: row wrap;
             }
 
             .unallocated-teams {
@@ -55,6 +55,7 @@
             }
 
             .team {
+                display: inline-block;
                 background-color: #333;
                 border-radius: 4px;
                 padding: 4px;
@@ -79,24 +80,22 @@
         <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.min.js"></script>
     </head>
     <body>
-        <div id="app">
+        <div id="app" class="container">
             <h1>World Cup 2018 Sweepstake</h1>
             <table>
                 <tbody>
                     <tr v-for="person in people_with_teams">
                         <td class="player">{{ person.name }}</td>
                         <td>
-                            <div class="teams">
-                                <div v-for="team in person.teams"
-                                    class="team" :class="{'knocked-out': team.knocked_out}">
-                                    {{ team.name }} <img :src="team.flag_url" class="flag"/>
-                                </div>
+                            <div v-for="team in person.teams"
+                                class="team" :class="{'knocked-out': team.knocked_out}">
+                                {{ team.name }} <img :src="team.flag_url" class="flag"/>
                             </div>
                         </td>
                     </tr>
                 </tbody>
             </table>
-            <div class="teams unallocated-teams">
+            <div class="unallocated-teams">
                 <div v-for="(team, index) in unallocated_teams"
                      class="team" :class="{'knocked-out': team.knocked_out}">
                     {{ team.name }} <img :src="team.flag_url" class="flag"/>
