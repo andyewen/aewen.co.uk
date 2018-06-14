@@ -17,10 +17,50 @@
         <style>
             * {
                 font-family: sans-serif;
+                color: #ccc;
             }
 
-            .flag {
+            body {
+                background-color: #111;
+            }
+
+            table {
+                table-layout: fixed;
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            th, td {
+                border: 1px solid #333;
+                padding: 8px;
+                text-align: left;
+            }
+
+            .teams {
+                display: flex;
+                flex-flow: row wrap;
+            }
+
+            .team {
+                background-color: #333;
+                border-radius: 4px;
+                padding: 4px;
+                margin: 4px;
+                white-space: no-wrap
+            }
+
+            .team.knocked-out {
+                text-decoration: line-through;
+                background-color: #222;
+                color: #999;
+            }
+
+            .team .flag {
                 height: 16px;
+                border-radius: 4px;
+            }
+            .team.knocked-out .flag {
+                filter: brightness(25%)
             }
         </style>
         <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.min.js"></script>
@@ -28,19 +68,13 @@
     <body>
         <div id="app">
             <h1>World Cup 2018 Sweepstake</h1>
-            <h2>Players</h2>
             <table>
-                <thead>
-                    <tr>
-                        <th>Person</th>
-                        <th>Teams</th>
-                    </tr>
-                </thead>
                 <tbody>
                     <tr v-for="person in people_with_teams">
                         <td>{{ person.name }}</td>
-                        <td>
-                            <div v-for="team in person.teams" :style="{'textDecoration': team.knocked_out ? 'line-through' : 'inherit'}">
+                        <td class="teams">
+                            <div v-for="team in person.teams"
+                                 class="team" :class="{'knocked-out': team.knocked_out}">
                                 {{ team.name }} <img :src="team.flag_url" class="flag"/>
                             </div>
                         </td>
@@ -48,14 +82,12 @@
                 </tbody>
             </table>
             <h2>Unallocated Teams</h2>
-            <p>
-                <span v-for="(team, index) in unallocated_teams">
-                    <span :style="{'textDecoration': team.knocked_out ? 'line-through' : 'inherit'}">
-                        {{ team.name }} <img :src="team.flag_url" class="flag"/>
-                    </span>
-                    <span v-if="index + 1 < unallocated_teams.length">, </span>
-                </span>
-            </p>
+            <div class="teams">
+                <div v-for="(team, index) in unallocated_teams"
+                     class="team" :class="{'knocked-out': team.knocked_out}">
+                    {{ team.name }} <img :src="team.flag_url" class="flag"/>
+                </div>
+            </div>
             <p><strong>Good luck!</strong> 🤑</p>
         </div>
 
