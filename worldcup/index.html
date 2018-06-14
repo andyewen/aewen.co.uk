@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>World Cup 2018 Sweepstake</title>
+        <link rel="shortcut icon" href="favicon.ico" />
+        <style>
+            * {
+                font-family: sans-serif;
+                font-size: 18pt;
+            }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+    </head>
+    <body>
+        <div id="app">
+            <h1>World Cup 2018 Sweepstake</h1>
+            <h2>Players</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Person</th>
+                        <th>Teams</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="person in people_with_teams">
+                        <td>{{ person.name }}</td>
+                        <td>
+                            <div v-for="team in person.teams" :style="{'textDecoration': team.knocked_out ? 'line-through' : 'inherit'}">
+                                {{ team.name }}
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <h2>Unallocated Teams</h2>
+            <p>
+                <span v-for="(team, index) in unallocated_teams">
+                    <span :style="{'textDecoration': team.knocked_out ? 'line-through' : 'inherit'}">
+                        {{ team.name }}
+                    </span>
+                    <span v-if="index + 1 < unallocated_teams.length">, </span>
+                </span>
+            </p>
+            <p><strong>Good luck!</strong> 🤑</p>
+        </div>
+
+        <script>
+            function Person(name, teams) {
+                this.name = name;
+                this.teams = teams;
+            }
+
+            function Team(code, name, knocked_out) {
+                this.code = code;
+                this.name = name;
+                this.knocked_out = knocked_out;
+            }
+
+            var app = new Vue({
+                el: '#app',
+                data: function() {
+                    var teams = [
+                        new Team('AR',      'Argentina',    false),
+                        new Team('AU',      'Australia',    false),
+                        new Team('BE',      'Belgium',      false),
+                        new Team('BR',      'Brazil',       false),
+                        new Team('CO',      'Colombia',     false),
+                        new Team('CR',      'Costa Rica',   false),
+                        new Team('HR',      'Croatia',      false),
+                        new Team('DK',      'Denmark',      false),
+                        new Team('EG',      'Egypt',        false),
+                        new Team('GB-ENG',  'England',      false),
+                        new Team('FR',      'France',       false),
+                        new Team('DE',      'Germany',      false),
+                        new Team('IS',      'Iceland',      false),
+                        new Team('IR',      'Iran',         false),
+                        new Team('JP',      'Japan',        false),
+                        new Team('MX',      'Mexico',       false),
+                        new Team('MA',      'Morocco',      false),
+                        new Team('NG',      'Nigeria',      false),
+                        new Team('PA',      'Panama',       false),
+                        new Team('PE',      'Peru',         false),
+                        new Team('PL',      'Poland',       false),
+                        new Team('PT',      'Portugal',     false),
+                        new Team('RU',      'Russia',       false),
+                        new Team('SA',      'Saudi Arabia', false),
+                        new Team('SN',      'Senegal',      false),
+                        new Team('RS',      'Serbia',       false),
+                        new Team('KR',      'South Korea',  false),
+                        new Team('ES',      'Spain',        false),
+                        new Team('SE',      'Sweden',       false),
+                        new Team('CH',      'Switzerland',  false),
+                        new Team('TN',      'Tunisia',      false),
+                        new Team('UY',      'Uruguay',      false)
+                    ];
+                    var people = [
+                        new Person('Andrew C.',     ['MX', 'CH']),
+                        new Person('Andrew E.',     ['BR', 'FR']),
+                        new Person('Anna S.',       ['CO', 'IS']),
+                        new Person('David H.',      ['DE', 'SE']),
+                        new Person('Scott B.',      ['MA', 'SA']),
+                        new Person('Ryan S.',       ['JP', 'KR']),
+                        new Person('Patrick G.',    ['AU', 'ES']),
+                        new Person('Freyja W.',     ['HR', 'DK']),
+                        new Person('Sam D.',        ['EG', 'PT']),
+                        new Person('Sam W.',        ['RU', 'UY']),
+                        new Person('John M.',       ['CR', 'NG'])
+                    ];
+
+                    return {
+                        teams: teams,
+                        people: people
+                    }
+                },
+                computed: {
+                    people_with_teams: function() {
+                        var teams_by_code = {};
+                        this.teams.forEach(function(team) {
+                            teams_by_code[team.code] = team;
+                        });
+
+                        return this.people.map(function(person) {
+                            return {
+                                'name': person.name,
+                                'teams': person.teams.map(function(team_code) {
+                                    return teams_by_code[team_code];
+                                })
+                            }
+                        });
+                    },
+                    unallocated_teams: function() {
+                        var allocated_team_codes = this.people.map(function(person) {
+                            return person.teams;
+                        }).reduce(function(a, b) { return a.concat(b); }, []);
+                        return this.teams.filter(function(team) {
+                            return allocated_team_codes.indexOf(team.code) == -1;
+                        });
+                    }
+                }
+            })
+        </script>
+    </body>
+</html>
