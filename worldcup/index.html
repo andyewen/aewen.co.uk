@@ -97,7 +97,7 @@
             </table>
             <div class="unallocated-teams">
                 <div v-for="(team, index) in unallocated_teams"
-                     class="team" :class="{'knocked-out': team.knocked_out}">
+                     class="team">
                     {{ team.name }} <img :src="team.flag_url" class="flag"/>
                 </div>
             </div>
@@ -110,9 +110,10 @@
                 this.teams = teams;
             }
 
-            function Team(code, name, knocked_out) {
+            function Team(code, name, group, knocked_out) {
                 this.code = code;
                 this.name = name;
+                this.group = group;
                 this.knocked_out = knocked_out;
                 this.flag_url = "flags/" + this.code.toLowerCase() + ".gif";
             }
@@ -121,51 +122,51 @@
                 el: '#app',
                 data: function() {
                     var teams = [
-                        new Team('AR',      'Argentina',    false),
-                        new Team('AU',      'Australia',    false),
-                        new Team('BE',      'Belgium',      false),
-                        new Team('BR',      'Brazil',       false),
-                        new Team('CO',      'Colombia',     false),
-                        new Team('CR',      'Costa Rica',   false),
-                        new Team('HR',      'Croatia',      false),
-                        new Team('DK',      'Denmark',      false),
-                        new Team('EG',      'Egypt',        false),
-                        new Team('GB-ENG',  'England',      false),
-                        new Team('FR',      'France',       false),
-                        new Team('DE',      'Germany',      false),
-                        new Team('IS',      'Iceland',      false),
-                        new Team('IR',      'Iran',         false),
-                        new Team('JP',      'Japan',        false),
-                        new Team('MX',      'Mexico',       false),
-                        new Team('MA',      'Morocco',      false),
-                        new Team('NG',      'Nigeria',      false),
-                        new Team('PA',      'Panama',       false),
-                        new Team('PE',      'Peru',         false),
-                        new Team('PL',      'Poland',       false),
-                        new Team('PT',      'Portugal',     false),
-                        new Team('RU',      'Russia',       false),
-                        new Team('SA',      'Saudi Arabia', false),
-                        new Team('SN',      'Senegal',      false),
-                        new Team('RS',      'Serbia',       false),
-                        new Team('KR',      'South Korea',  false),
-                        new Team('ES',      'Spain',        false),
-                        new Team('SE',      'Sweden',       false),
-                        new Team('CH',      'Switzerland',  false),
-                        new Team('TN',      'Tunisia',      false),
-                        new Team('UY',      'Uruguay',      false)
+                        new Team('ARG',     'Argentina',    'D',    false),
+                        new Team('AUS',     'Australia',    'C',    false),
+                        new Team('BEL',     'Belgium',      'G',    false),
+                        new Team('BRA',     'Brazil',       'E',    false),
+                        new Team('COL',     'Colombia',     'H',    false),
+                        new Team('CRC',     'Costa Rica',   'E',    false),
+                        new Team('CRO',     'Croatia',      'D',    false),
+                        new Team('DEN',     'Denmark',      'C',    false),
+                        new Team('EGY',     'Egypt',        'A',    false),
+                        new Team('ENG',     'England',      'G',    false),
+                        new Team('FRA',     'France',       'C',    false),
+                        new Team('GER',     'Germany',      'F',    false),
+                        new Team('ISL',     'Iceland',      'D',    false),
+                        new Team('IRN',     'Iran',         'B',    false),
+                        new Team('JPN',     'Japan',        'H',    false),
+                        new Team('MEX',     'Mexico',       'F',    false),
+                        new Team('MAR',     'Morocco',      'B',    false),
+                        new Team('NGA',     'Nigeria',      'D',    false),
+                        new Team('PAN',     'Panama',       'G',    false),
+                        new Team('PER',     'Peru',         'C',    false),
+                        new Team('POL',     'Poland',       'H',    false),
+                        new Team('POR',     'Portugal',     'B',    false),
+                        new Team('RUS',     'Russia',       'A',    false),
+                        new Team('KSA',     'Saudi Arabia', 'A',    false),
+                        new Team('SEN',     'Senegal',      'H',    false),
+                        new Team('SRB',     'Serbia',       'E',    false),
+                        new Team('KOR',     'South Korea',  'F',    false),
+                        new Team('ESP',     'Spain',        'B',    false),
+                        new Team('SWE',     'Sweden',       'F',    false),
+                        new Team('SUI',     'Switzerland',  'E',    false),
+                        new Team('TUN',     'Tunisia',      'G',    false),
+                        new Team('URU',     'Uruguay',      'A',    false)
                     ];
                     var people = [
-                        new Person('Andrew C.',     ['MX', 'CH']),
-                        new Person('Andrew E.',     ['BR', 'FR']),
-                        new Person('Anna S.',       ['CO', 'IS']),
-                        new Person('David H.',      ['DE', 'SE']),
-                        new Person('Freyja W.',     ['HR', 'DK']),
-                        new Person('John M.',       ['CR', 'NG']),
-                        new Person('Patrick G.',    ['AU', 'ES']),
-                        new Person('Ryan S.',       ['JP', 'KR']),
-                        new Person('Sam D.',        ['EG', 'PT']),
-                        new Person('Sam W.',        ['RU', 'UY']),
-                        new Person('Scott B.',      ['MA', 'SA'])
+                        new Person('Andrew C.',     ['MEX', 'SUI']),
+                        new Person('Andrew E.',     ['BRA', 'FRA']),
+                        new Person('Anna S.',       ['COL', 'ISL']),
+                        new Person('David H.',      ['GER', 'SWE']),
+                        new Person('Freyja W.',     ['CRO', 'DEN']),
+                        new Person('John M.',       ['CRC', 'NGA']),
+                        new Person('Patrick G.',    ['AUS', 'ESP']),
+                        new Person('Ryan S.',       ['JPN', 'KOR']),
+                        new Person('Sam D.',        ['EGY', 'POR']),
+                        new Person('Sam W.',        ['RUS', 'URU']),
+                        new Person('Scott B.',      ['MAR', 'KSA'])
                     ];
 
                     return {
@@ -180,7 +181,7 @@
                             teams_by_code[team.code] = team;
                         });
 
-                        return this.people.map(function(person) {
+                        return result = this.people.map(function(person) {
                             return {
                                 'name': person.name,
                                 'teams': person.teams.map(function(team_code) {
@@ -188,12 +189,13 @@
                                 })
                             }
                         });
+                        return result;
                     },
                     unallocated_teams: function() {
                         var allocated_team_codes = this.people.map(function(person) {
                             return person.teams;
                         }).reduce(function(a, b) { return a.concat(b); }, []);
-                        return this.teams.filter(function(team) {
+                        return result =  this.teams.filter(function(team) {
                             return allocated_team_codes.indexOf(team.code) == -1;
                         });
                     }
