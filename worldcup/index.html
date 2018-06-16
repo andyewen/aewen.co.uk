@@ -59,11 +59,8 @@
                 background-color: #333;
                 border-radius: 4px;
                 padding: 4px;
-                white-space: nowrap
-            }
-
-            .team-spaced {
                 margin: 4px;
+                white-space: nowrap
             }
 
             .team.knocked-out {
@@ -80,85 +77,32 @@
                 filter: brightness(25%)
             }
         </style>
-        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.min.js"></script>
     </head>
     <body>
-        <div id="app"></div>
-
-        <script type="x-vue-template" id="template">
-            <div  class="container">
-                <h1>World Cup 2018 Sweepstake</h1>
-
-                <h2>Next Match</h2>
-                <template v-if="matches && next_match">
-                    <p>
-                        <div class="team">
-                            {{ teams_by_code[next_match.home_team.code].name }}
-                            ({{ team_code_to_person[next_match.home_team.code].name }})
-                            <img :src="teams_by_code[next_match.home_team.code].flag_url" class="flag">
-                        </div>
-                        vs.
-                        <div class="team">
-                            {{ teams_by_code[next_match.away_team.code].name }}
-                            ({{ team_code_to_person[next_match.away_team.code].name }})
-                            <img :src="teams_by_code[next_match.away_team.code].flag_url" class="flag">
-                        </div>
-                    </p>
-                </template>
-                <p v-else-if="!matches">
-                    loading...
-                </p>
-                <p v-else>
-                    no more matches, it's all over!
-                </p>
-
-                <h2>Last Match</h2>
-                <template v-if="matches && last_match">
-                    <p>
-                        <div class="team">
-                            {{ teams_by_code[last_match.home_team.code].name }}
-                            ({{ team_code_to_person[last_match.home_team.code].name }})
-                            <img :src="teams_by_code[last_match.home_team.code].flag_url" class="flag"/>
-                        </div>
-                        vs.
-                        <div class="team">
-                            {{ teams_by_code[last_match.away_team.code].name }}
-                            ({{ team_code_to_person[last_match.away_team.code].name }})
-                            <img :src="teams_by_code[last_match.away_team.code].flag_url" class="flag"/>
-                        </div>
-                    </p>
-                </template>
-                <p v-else-if="!matches">
-                    loading...
-                </p>
-                <p v-else>
-                    no matches have been played yet!
-                </p>
-
-                <h2>Players and Teams</h2>
-                <table>
-                    <tbody>
-                        <tr v-for="person in people_with_teams">
-                            <td class="player">{{ person.name }}</td>
-                            <td>
-                                <div v-for="team in person.teams"
-                                    class="team team-spaced" :class="{'knocked-out': team.knocked_out}">
-                                    {{ team.name }} <img :src="team.flag_url" class="flag"/>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="unallocated-teams">
-                    <div v-for="(team, index) in unallocated_teams"
-                            class="team team-spaced">
-                        {{ team.name }} <img :src="team.flag_url" class="flag"/>
-                    </div>
+        <div id="app" class="container">
+            <h1>World Cup 2018 Sweepstake</h1>
+            <table>
+                <tbody>
+                    <tr v-for="person in people_with_teams">
+                        <td class="player">{{ person.name }}</td>
+                        <td>
+                            <div v-for="team in person.teams"
+                                class="team" :class="{'knocked-out': team.knocked_out}">
+                                {{ team.name }} <img :src="team.flag_url" class="flag"/>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="unallocated-teams">
+                <div v-for="(team, index) in unallocated_teams"
+                     class="team">
+                    {{ team.name }} <img :src="team.flag_url" class="flag"/>
                 </div>
-
-                <p><strong>Good luck!</strong> 🤑</p>
             </div>
-        </script>
+            <p><strong>Good luck!</strong> 🤑</p>
+        </div>
 
         <script>
             function Person(name, teams) {
@@ -176,7 +120,6 @@
 
             var app = new Vue({
                 el: '#app',
-                template: '#template',
                 data: function() {
                     var teams = [
                         new Team('ARG',     'Argentina',    'D',    false),
@@ -225,23 +168,11 @@
                         new Person('Sam W.',        ['RUS', 'URU']),
                         new Person('Scott B.',      ['MAR', 'KSA'])
                     ];
-                    var match_length = 120 * 60 * 1000;
 
                     return {
                         teams: teams,
-                        people: people,
-                        match_length: match_length,
-                        matches: null
+                        people: people
                     }
-                },
-                created: function() {
-                    var self = this,
-                        req = new XMLHttpRequest();
-                    req.addEventListener("load", function(e) {
-                        self.matches = JSON.parse(this.responseText);
-                    });
-                    req.open("GET", "http://worldcup.sfg.io/matches");
-                    req.send();
                 },
                 computed: {
                     people_with_teams: function() {
@@ -267,50 +198,6 @@
                         return result =  this.teams.filter(function(team) {
                             return allocated_team_codes.indexOf(team.code) == -1;
                         });
-                    },
-                    teams_by_code: function() {
-                        var teams = {};
-                        this.teams.forEach(function(team) {
-                            teams[team.code] = team;
-                        });
-                        return teams;
-                    },
-                    team_code_to_person: function() {
-                        var teams = {};
-                        this.people.forEach(function(p) {
-                            p.teams.forEach(function(t) {
-                                teams[t] = p;
-                            });
-                        });
-                        return teams;
-                    },
-                    next_match: function() {
-                        if (this.matches) {
-                            var now = new Date();
-                            for (var i = 0; i < this.matches.length; i++) {
-                                if (this.match_end_time(this.matches[i].datetime) > now) {
-                                    return this.matches[i];
-                                }
-                            }
-                        }
-                        return null;
-                    },
-                    last_match: function() {
-                        if (!this.matches) { return null }
-                        var now = new Date();
-                        for (var i = 0; i < this.matches.length - 1; i++) {
-                            if (this.match_end_time(this.matches[i].datetime) > now) {
-                                if (i <= 0) { return null; }
-                                return this.matches[i - 1];
-                            }
-                        }
-                        return this.matches[this.matches.length - 1];
-                    }
-
-                },
-                methods: {
-                    match_end_time: function(start_time) {
-                        return new Date(new Date(start_time) + this.match_length);
                     }
                 }
             })
