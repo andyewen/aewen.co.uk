@@ -240,7 +240,7 @@
                     req.addEventListener("load", function(e) {
                         self.matches = JSON.parse(this.responseText);
                     });
-                    req.open("GET", "http://worldcup.sfg.io/matches");
+                    req.open("GET", "https://world-cup-json.herokuapp.com/matches/");
                     req.send();
                 },
                 computed: {
