@@ -80,7 +80,7 @@
                 filter: brightness(25%)
             }
         </style>
-        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.min.js"></script>
     </head>
     <body>
         <div id="app"></div>
@@ -94,13 +94,23 @@
                     <p>
                         <div class="team">
                             {{ teams_by_code[next_match.home_team.code].name }}
-                            ({{ team_code_to_person[next_match.home_team.code].name }})
+                            <span v-if="team_code_to_person[next_match.home_team.code]">
+                                ({{ team_code_to_person[next_match.home_team.code].name }})
+                            </span>
+                            <span v-else>
+                                (N/A)
+                            </span>
                             <img :src="teams_by_code[next_match.home_team.code].flag_url" class="flag">
                         </div>
                         vs.
                         <div class="team">
                             {{ teams_by_code[next_match.away_team.code].name }}
-                            ({{ team_code_to_person[next_match.away_team.code].name }})
+                            <span v-if="team_code_to_person[next_match.away_team.code]">
+                                ({{ team_code_to_person[next_match.away_team.code].name }})
+                            </span>
+                            <span v-else>
+                                (N/A)
+                            </span>
                             <img :src="teams_by_code[next_match.away_team.code].flag_url" class="flag">
                         </div>
                     </p>
@@ -117,13 +127,23 @@
                     <p>
                         <div class="team">
                             {{ teams_by_code[last_match.home_team.code].name }}
-                            ({{ team_code_to_person[last_match.home_team.code].name }})
+                            <span v-if="team_code_to_person[last_match.home_team.code]">
+                                ({{ team_code_to_person[last_match.home_team.code].name }})
+                            </span>
+                            <span v-else>
+                                (N/A)
+                            </span>
                             <img :src="teams_by_code[last_match.home_team.code].flag_url" class="flag"/>
                         </div>
                         vs.
                         <div class="team">
                             {{ teams_by_code[last_match.away_team.code].name }}
-                            ({{ team_code_to_person[last_match.away_team.code].name }})
+                            <span v-if="team_code_to_person[last_match.away_team.code]">
+                                ({{ team_code_to_person[last_match.away_team.code].name }})
+                            </span>
+                            <span v-else>
+                                (N/A)
+                            </span>
                             <img :src="teams_by_code[last_match.away_team.code].flag_url" class="flag"/>
                         </div>
                     </p>
@@ -225,12 +245,10 @@
                         new Person('Sam W.',        ['RUS', 'URU']),
                         new Person('Scott B.',      ['MAR', 'KSA'])
                     ];
-                    var match_length = 120 * 60 * 1000;
 
                     return {
                         teams: teams,
                         people: people,
-                        match_length: match_length,
                         matches: null
                     }
                 },
@@ -288,7 +306,7 @@
                         if (this.matches) {
                             var now = new Date();
                             for (var i = 0; i < this.matches.length; i++) {
-                                if (this.match_end_time(this.matches[i].datetime) > now) {
+                                if (this.matches[i].status != 'completed') {
                                     return this.matches[i];
                                 }
                             }
@@ -299,7 +317,7 @@
                         if (!this.matches) { return null }
                         var now = new Date();
                         for (var i = 0; i < this.matches.length - 1; i++) {
-                            if (this.match_end_time(this.matches[i].datetime) > now) {
+                            if (this.matches[i].status != 'completed') {
                                 if (i <= 0) { return null; }
                                 return this.matches[i - 1];
                             }
@@ -307,11 +325,6 @@
                         return this.matches[this.matches.length - 1];
                     }
 
-                },
-                methods: {
-                    match_end_time: function(start_time) {
-                        return new Date(new Date(start_time) + this.match_length);
-                    }
                 }
             })
         </script>
