@@ -26,11 +26,11 @@
             }
 
             .container {
-                max-width: 800px;
+                max-width: 840px;
                 margin: 0 auto;
             }
 
-            .match-header {
+            .match-header, .groups-header {
                 margin-bottom: 8px;
             }
 
@@ -44,23 +44,50 @@
             }
 
             table {
+                border-collapse: collapse;
+            }
+
+            table.player-table {
                 table-layout: fixed;
                 width: 100%;
-                border-collapse: collapse;
+            }
+
+            table.player-table tbody td:nth-child(1) {
+                width: 40%;
+            }
+
+            table.player-table tbody td:nth-child(2) {
+                width: 60%;
+            }
+
+            table.group-table {
+                width: 100%;
+            }
+
+            @media only screen and (max-width: 400px) {
+                table.group-table .hide-column {
+                    display: none;
+                }
+            }
+
+            .group-table-container {
+                width: 50%;
+                display: inline-block;
+                box-sizing: border-box;
+                padding: 8px;
+            }
+
+            @media only screen and (max-width: 840px) {
+                .group-table-container {
+                    width: 100%;
+                    padding: 8px 0;
+                }
             }
 
             th, td {
                 border: 1px solid #333;
                 padding: 8px;
                 text-align: left;
-            }
-
-            tbody td:nth-child(1) {
-                width: 40%;
-            }
-
-            tbody td:nth-child(2) {
-                width: 60%;
             }
 
             .unallocated-teams {
@@ -138,7 +165,7 @@
                         :person="team_code_to_person[match.away_team.code]"
                         class="team-spaced"
                     />
-                    <div class="match-kickoff"><small>{{ formatted_kickoff_time }}</small></div>
+                    <div class="match-kickoff"><small>{{ formatted_kickoff_time }} (uk time)</small></div>
                 </template>
                 <p v-else-if="loading">
                     loading...
@@ -149,8 +176,45 @@
             </div>
         </script>
 
+        <script type="x-vue-template" id="group-table-template">
+            <div class="group-table-container">
+                <table class="group-table">
+                    <thead>
+                        <tr>
+                            <th colspan="6">Group {{ group.code }}</th>
+                        </tr>
+                        <tr>
+                            <th>Team</th>
+                            <th class="hide-column">W</th>
+                            <th class="hide-column">D</th>
+                            <th class="hide-column">L</th>
+                            <th class="hide-column">GD</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="team in group.teams">
+                            <td>
+                                <team-badge :team="teams_by_code[team.code] || null"
+                                            :person="team_code_to_person[team.code]"
+                                            class="team-spaced"
+                                />
+                            </td>
+                            <td class="hide-column">{{ team.group_stats.wins }}</td>
+                            <td class="hide-column">{{ team.group_stats.draws }}</td>
+                            <td class="hide-column">{{ team.group_stats.losses }}</td>
+                            <td class="hide-column">
+                                <template v-if="team.get_group_goal_difference() >= 0">+</template>{{ team.get_group_goal_difference() }}
+                            </td>
+                            <td>{{ team.get_group_points() }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </script>
+
         <script type="x-vue-template" id="app-template">
-            <div  class="container">
+            <div class="container">
                 <h1>World Cup 2018 Sweepstake</h1>
 
                 <h2 class="match-header">
@@ -170,7 +234,7 @@
                        :team_code_to_person="team_code_to_person" />
 
                 <h2>Players and Teams</h2>
-                <table>
+                <table class="player-table">
                     <tbody>
                         <tr v-for="person in people_with_teams">
                             <td class="player">{{ person.name }}</td>
@@ -190,6 +254,10 @@
                     />
                 </div>
 
+                <h2 class="groups-header">Groups</h2>
+                <group-table v-for="group in groups":key="group.code"
+                            :group="group" :teams_by_code="teams_by_code" :team_code_to_person="team_code_to_person"/>
+
                 <p><strong>Good luck!</strong> 🤑</p>
             </div>
         </script>
@@ -206,6 +274,26 @@
                 this.group = group;
                 this.knocked_out = knocked_out;
                 this.flag_url = "flags/" + this.code.toLowerCase() + ".gif";
+
+                this.group_stats = {
+                    goals_scored: 0,
+                    goals_conceded: 0,
+                    wins: 0,
+                    draws: 0,
+                    losses: 0
+                }
+            }
+
+            Team.prototype.get_group_points = function() {
+                return (this.group_stats.wins * 3) + (this.group_stats.draws);
+            }
+
+            Team.prototype.get_group_played = function() {
+                return this.group_stats.wins + this.group_stats.draws + this.group_stats.losses;
+            }
+
+            Team.prototype.get_group_goal_difference = function() {
+                return this.group_stats.goals_scored - this.group_stats.goals_conceded;
             }
 
             Vue.component('team-badge', {
@@ -245,6 +333,15 @@
                                t.getDate() + " " +
                                + pad2(t.getHours()) + ":" + pad2(t.getSeconds())
                     }
+                }
+            });
+
+            Vue.component('group-table', {
+                template: '#group-table-template',
+                props: {
+                    'group': Object,
+                    'teams_by_code': Object,
+                    'team_code_to_person': Object
                 }
             });
 
@@ -303,6 +400,7 @@
                     return {
                         teams: teams,
                         people: people,
+                        group_match_pivot: new Date('2018-06-28T22:00Z'),
                         matches: null
                     }
                 },
@@ -310,10 +408,46 @@
                     var self = this,
                         req = new XMLHttpRequest();
                     req.addEventListener("load", function(e) {
-                        self.matches = JSON.parse(this.responseText);
+                        self.load_matches(JSON.parse(this.responseText));
                     });
                     req.open("GET", "https://world-cup-json.herokuapp.com/matches/?by_date=asc");
                     req.send();
+                },
+                methods: {
+                    load_matches: function(matches) {
+                        var self = this;
+                        self.matches = matches;
+
+                        var completed_group_matches = this.matches.filter(function(m) {
+                            return m.status == 'completed' && new Date(m.datetime) < self.group_match_pivot;
+                        });
+
+                        completed_group_matches.forEach(function(match) {
+                            var home_team = self.teams_by_code[match.home_team.code],
+                                away_team = self.teams_by_code[match.away_team.code];
+                            if (!home_team || !away_team) { return; }
+
+                            home_stats = home_team.group_stats;
+                            away_stats = away_team.group_stats;
+
+                            if (match.home_team.goals > match.away_team.goals) {
+                                home_stats.wins++;
+                                away_stats.losses++;
+                            } else if (match.home_team.goals < match.away_team.goals) {
+                                home_stats.losses++;
+                                away_stats.wins++;
+                            } else {
+                                home_stats.draws++;
+                                away_stats.draws++;
+                            }
+
+                            home_stats.goals_scored += match.home_team.goals;
+                            away_stats.goals_scored += match.away_team.goals;
+
+                            home_stats.goals_conceded += match.away_team.goals;
+                            away_stats.goals_conceded += match.home_team.goals;
+                        });
+                    }
                 },
                 computed: {
                     people_with_teams: function() {
@@ -356,6 +490,53 @@
                         });
                         return teams;
                     },
+                    groups: function() {
+                        var self = this,
+                            groups = {}
+                        this.teams.forEach(function(team) {
+                            if (!groups[team.group]) {
+                                groups[team.group] = {
+                                    code: team.group,
+                                    teams: []
+                                };
+                            }
+                            groups[team.group].teams.push(team);
+                        });
+
+                        groups = Object.values(groups);
+                        groups.sort(function(a, b) {
+                            if (a.code < b.code) return -1;
+                            if (a.code > b.code) return 1;
+                            return 0;
+                        });
+
+                        groups.forEach(function(group) {
+                            group.teams.sort(function(a, b) {
+                                // Sort by points
+                                var a_points = a.get_group_points(),
+                                    b_points = b.get_group_points();
+                                if (a_points > b_points) return -1;
+                                if (b_points < b_points) return 1;
+
+                                // Then by goal difference.
+                                var a_gd = a.get_group_goal_difference(),
+                                    b_gd = b.get_group_goal_difference()
+                                if (a_gd > b_gd) return -1;
+                                if (a_gd < b_gd) return 1;
+
+                                // Then by goals scored.
+                                if (a.group_stats.goals_scored > b.group_stats.goals_scored) return -1;
+                                if (a.group_stats.goals_scored < b.group_stats.goals_scored) return 1;
+
+                                // Then by name.
+                                if (a.name < b.name) return -1;
+                                if (a.name > b.name) return 1;
+                                return 0;
+                            });
+                        });
+
+                        return groups;
+                    },
                     next_match: function() {
                         if (this.matches) {
                             var now = new Date();
@@ -378,7 +559,6 @@
                         }
                         return this.matches[this.matches.length - 1];
                     }
-
                 }
             })
         </script>
