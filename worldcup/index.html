@@ -165,7 +165,7 @@
                         :person="team_code_to_person[match.away_team.code]"
                         class="team-spaced"
                     />
-                    <div class="match-kickoff"><small>{{ formatted_kickoff_time }} (uk time)</small></div>
+                    <div class="match-kickoff"><small>{{ formatted_kickoff_time }} ({{ tz_offset }})</small></div>
                 </template>
                 <p v-else-if="loading">
                     loading...
@@ -284,6 +284,10 @@
                 }
             }
 
+            function pad2(n) {
+                return (n < 10 ? "0" : "") + n;
+            }
+
             Team.prototype.get_group_points = function() {
                 return (this.group_stats.wins * 3) + (this.group_stats.draws);
             }
@@ -316,6 +320,15 @@
                     'teams_by_code': Object,
                     'team_code_to_person': Object
                 },
+                data: function() {
+                    var tz_offset = -(new Date().getTimezoneOffset());
+                    tz_offset =
+                        "GMT" + (tz_offset >= 0 ? '+' : '-') +
+                        pad2(Math.floor(Math.abs(tz_offset) / 60)) + ":" + pad2(Math.abs(tz_offset) % 60);
+                    return {
+                        tz_offset: tz_offset
+                    }
+                },
                 computed: {
                     show_scores: function() {
                         if (!this.match) { return false; }
@@ -323,11 +336,8 @@
                     },
                     formatted_kickoff_time: function() {
                         if (!this.match) { return null; }
-                        function pad2(n) {
-                            return (n < 10 ? "0" : "") + n;
-                        }
                         var months = ['January', 'February', 'March', 'April', 'May', 'June',
-                                       'July', 'August', 'September', 'October', 'November', 'December'];
+                                      'July', 'August', 'September', 'October', 'November', 'December'];
                         var t = new Date(this.match.datetime);
                         return months[t.getMonth()] + " " +
                                t.getDate() + " " +
