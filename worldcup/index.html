@@ -617,9 +617,9 @@
                                 });
 
                                 var pos = 1,
-                                    last_row_points = group_table[0];
+                                    previous_row_points = group_table[0].points;
                                 group_table.forEach(function(row) {
-                                    if (row.points < last_row_points) {
+                                    if (row.points < previous_row_points) {
                                         pos++;
                                     }
 
