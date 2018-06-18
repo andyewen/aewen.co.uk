@@ -426,7 +426,17 @@
                 methods: {
                     load_matches: function(matches) {
                         var self = this;
-                        self.matches = matches;
+                        self.matches = matches.sort(function(a, b) {
+                            if (!a.datetime && !b.datetime) return 0;
+                            if (!a.datetime) return 1;
+                            if (!b.datetime) return -1;
+
+                            var a = new Date(a.datetime),
+                                b = new Date(b.datetime);
+                            if (a < b) return -1;
+                            if (a > b) return 1;
+                            return 0;
+                        });
 
                         var completed_group_matches = this.matches.filter(function(m) {
                             return m.status == 'completed' && new Date(m.datetime) < self.group_match_pivot;
