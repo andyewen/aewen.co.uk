@@ -288,7 +288,27 @@
                 return (n < 10 ? "0" : "") + n;
             }
 
-            Team.prototype.get_group_points = function() {
+            function product(iterables, repeat) {
+                var argv = Array.prototype.slice.call(arguments), argc = argv.length;
+                if (argc === 2 && !isNaN(argv[argc - 1])) {
+                    var copies = [];
+                    for (var i = 0; i < argv[argc - 1]; i++) {
+                        copies.push(argv[0].slice()); // Clone
+                    }
+                    argv = copies;
+                }
+                return argv.reduce(function tl(accumulator, value) {
+                    var tmp = [];
+                    accumulator.forEach(function (a0) {
+                        value.forEach(function (a1) {
+                            tmp.push(a0.concat(a1));
+                        });
+                    });
+                    return tmp;
+                }, [[]]);
+            }
+
+            Team.prototype.get_group_points = function () {
                 return (this.group_stats.wins * 3) + (this.group_stats.draws);
             }
 
@@ -438,8 +458,8 @@
                             return 0;
                         });
 
-                        var completed_group_matches = this.matches.filter(function(m) {
-                            return m.status == 'completed' && new Date(m.datetime) < self.group_match_pivot;
+                        var completed_group_matches = this.group_matches.filter(function(m) {
+                            return m.status == 'completed';
                         });
 
                         completed_group_matches.forEach(function(match) {
@@ -557,6 +577,67 @@
 
                         return groups;
                     },
+                    team_knocked_out: function() {
+                        var self = this;
+                        var team_knocked_out = {};
+                        self.groups.forEach(function(group) {
+                            var group_future_matches = self.group_matches.filter(function(match) {
+                                return match.status != 'completed' && self.teams_by_code[match.home_team.code].group == group.code;
+                            });
+
+                            var team_highest_positions = {},
+                                possible_group_match_outcomes = product(['H', 'A', 'D'], group_future_matches.length);
+
+                            possible_group_match_outcomes.forEach(function(match_results) {
+                                var group_table = {};
+                                group.teams.forEach(function(team) {
+                                    group_table[team.code] = team.points;
+                                });
+
+                                group_future_matches.forEach(function(match, i) {
+                                    var outcome = match_results[i];
+                                    if (outcome == 'H') {
+                                        group_table[match.home_team.code] += 3;
+                                    } else if (outcome == 'A') {
+                                        group_table[match.away_team.code] += 3;
+                                    } else if (outcome == 'D') {
+                                        group_table[match.home_team.code] += 1;
+                                        group_table[match.away_team.code] += 1;
+                                    }
+                                });
+
+                                group_table = Object.keys(group_table).map(function(key) {
+                                    return {team: key, points: group_table[key]};
+                                });
+
+                                group_table.sort(function(a, b) {
+                                    if (a.points > b.points) return -1;
+                                    if (a.points < b.points) return 1;
+                                    return 0;
+                                });
+
+                                var pos = 1,
+                                    last_row_points = group_table[0];
+                                group_table.forEach(function(row) {
+                                    if (row.points < last_row_points) {
+                                        pos++;
+                                    }
+
+                                    if (
+                                        !team_highest_positions[row.team] ||
+                                        row.points < team_highest_positions[row.team]
+                                    ) {
+                                        team_highest_positions[row.team] = pos;
+                                    }
+                                });
+                            });
+
+                            for (team_code in team_highest_positions) {
+                                team_knocked_out[team_code] = team_highest_positions[team_code] > 2;
+                            }
+                        });
+                        return team_knocked_out;
+                    },
                     next_match: function() {
                         if (this.matches) {
                             var now = new Date();
@@ -578,6 +659,14 @@
                             }
                         }
                         return this.matches[this.matches.length - 1];
+                    },
+                    group_matches: function() {
+                        var self = this;
+                        if (!self.matches) return null;
+
+                        return self.matches.filter(function(m) {
+                            return new Date(m.datetime) < self.group_match_pivot;
+                        });
                     }
                 }
             })
