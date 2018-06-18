@@ -126,17 +126,17 @@
         <div id="app"></div>
 
         <script type="x-vue-template" id="team-badge-template">
-            <div class="team" :class="{'knocked-out': team && team.knocked_out}">
+            <div class="team" :class="{'knocked-out': knocked_out}">
                 <template v-if="team">
                     {{ team.name }}
-                    <span v-if="show_person">
+                    <template v-if="show_person">
                         <template v-if="person">
                             ({{ person.name }})
                         </template>
                         <template v-else>
                             (N/A)
                         </template>
-                    </span>
+                    </template>
                     <img :src="team.flag_url" class="flag">
                 </template>
                 <template v-else>
@@ -197,6 +197,7 @@
                             <td>
                                 <team-badge :team="teams_by_code[team.code] || null"
                                             :person="team_code_to_person[team.code]"
+                                            :knocked_out="team_knocked_out[team.code]"
                                             class="team-spaced"
                                 />
                             </td>
@@ -240,7 +241,7 @@
                             <td class="player">{{ person.name }}</td>
                             <td>
                                 <team-badge v-for="team in person.teams" :key="team.code"
-                                    :team="team" :show_person="false"
+                                    :team="team" :show_person="false" :knocked_out="team_knocked_out[team.code]"
                                     class="team-spaced"
                                 />
                             </td>
@@ -249,14 +250,15 @@
                 </table>
                 <div class="unallocated-teams">
                     <team-badge v-for="team in unallocated_teams":key="team.code"
-                        :team="team" :show_person="false"
+                        :team="team" :show_person="false" :knocked_out="team_knocked_out[team.code]"
                         class="team-spaced"
                     />
                 </div>
 
                 <h2 class="groups-header">Groups</h2>
                 <group-table v-for="group in groups":key="group.code"
-                            :group="group" :teams_by_code="teams_by_code" :team_code_to_person="team_code_to_person"/>
+                            :group="group" :teams_by_code="teams_by_code" :team_code_to_person="team_code_to_person"
+                            :team_knocked_out="team_knocked_out"/>
 
                 <p><strong>Good luck!</strong> 🤑</p>
             </div>
@@ -328,6 +330,10 @@
                     'show_person': {
                         type: Boolean,
                         default: true
+                    },
+                    'knocked_out': {
+                        type: Boolean,
+                        default: false
                     }
                 }
             });
@@ -371,7 +377,8 @@
                 props: {
                     'group': Object,
                     'teams_by_code': Object,
-                    'team_code_to_person': Object
+                    'team_code_to_person': Object,
+                    'team_knocked_out': Object
                 }
             });
 
@@ -578,64 +585,91 @@
                         return groups;
                     },
                     team_knocked_out: function() {
-                        var self = this;
-                        var team_knocked_out = {};
+                        var self = this,
+                            team_knocked_out = {},
+                            simulated_match_count = 0;
+
+                        self.teams.forEach(function(team) {
+                            team_knocked_out[team.code] = false;
+                        });
+
+                        if (!self.matches) {
+                            // We haven't loaded the matches yet, just return false for everyone.
+                            return team_knocked_out;
+                        }
+
                         self.groups.forEach(function(group) {
                             var group_future_matches = self.group_matches.filter(function(match) {
                                 return match.status != 'completed' && self.teams_by_code[match.home_team.code].group == group.code;
-                            });
+                            })
+                            var team_highest_positions = {}
 
-                            var team_highest_positions = {},
-                                possible_group_match_outcomes = product(['H', 'A', 'D'], group_future_matches.length);
+                            if (group_future_matches.length) {
+                                // There are matches still to be played, simulate them!
+                                var possible_group_match_outcomes = product(['H', 'A', 'D'], group_future_matches.length);
 
-                            possible_group_match_outcomes.forEach(function(match_results) {
-                                var group_table = {};
-                                group.teams.forEach(function(team) {
-                                    group_table[team.code] = team.points;
+                                possible_group_match_outcomes.forEach(function(match_results) {
+                                    var group_table = {};
+                                    group.teams.forEach(function(team) {
+                                        group_table[team.code] = team.points;
+                                    });
+
+                                    group_future_matches.forEach(function(match, i) {
+                                        var outcome = match_results[i];
+                                        if (outcome == 'H') {
+                                            group_table[match.home_team.code] += 3;
+                                        } else if (outcome == 'A') {
+                                            group_table[match.away_team.code] += 3;
+                                        } else if (outcome == 'D') {
+                                            group_table[match.home_team.code]++;
+                                            group_table[match.away_team.code]++;
+                                        }
+                                        simulated_match_count++;
+                                    });
+
+                                    group_table = Object.keys(group_table).map(function(key) {
+                                        return {team: key, points: group_table[key]};
+                                    });
+
+                                    group_table.sort(function(a, b) {
+                                        if (a.points > b.points) return -1;
+                                        if (a.points < b.points) return 1;
+                                        return 0;
+                                    });
+
+                                    var pos = 1,
+                                        previous_row_points = group_table[0].points;
+                                    group_table.forEach(function(row) {
+                                        if (row.points < previous_row_points) {
+                                            pos++;
+                                        }
+
+                                        if (
+                                            !team_highest_positions[row.team] ||
+                                            row.points < team_highest_positions[row.team]
+                                        ) {
+                                            team_highest_positions[row.team] = pos;
+                                        }
+                                    });
                                 });
-
-                                group_future_matches.forEach(function(match, i) {
-                                    var outcome = match_results[i];
-                                    if (outcome == 'H') {
-                                        group_table[match.home_team.code] += 3;
-                                    } else if (outcome == 'A') {
-                                        group_table[match.away_team.code] += 3;
-                                    } else if (outcome == 'D') {
-                                        group_table[match.home_team.code] += 1;
-                                        group_table[match.away_team.code] += 1;
-                                    }
+                            } else {
+                                // There are no matches left to be played in this group, just use their position in the group.
+                                group.teams.forEach(function(team, i) {
+                                    team_highest_positions[team.code] = i + 1;
                                 });
-
-                                group_table = Object.keys(group_table).map(function(key) {
-                                    return {team: key, points: group_table[key]};
-                                });
-
-                                group_table.sort(function(a, b) {
-                                    if (a.points > b.points) return -1;
-                                    if (a.points < b.points) return 1;
-                                    return 0;
-                                });
-
-                                var pos = 1,
-                                    previous_row_points = group_table[0].points;
-                                group_table.forEach(function(row) {
-                                    if (row.points < previous_row_points) {
-                                        pos++;
-                                    }
-
-                                    if (
-                                        !team_highest_positions[row.team] ||
-                                        row.points < team_highest_positions[row.team]
-                                    ) {
-                                        team_highest_positions[row.team] = pos;
-                                    }
-                                });
-                            });
+                            }
 
                             for (team_code in team_highest_positions) {
-                                team_knocked_out[team_code] = team_highest_positions[team_code] > 2;
+                                team_knocked_out[team_code] = (
+                                    self.teams_by_code[team_code].knocked_out ||
+                                    team_highest_positions[team_code] > 2
+                                );
                             }
                         });
+                        if (simulated_match_count) {
+                            console.log('Simulated ' + simulated_match_count +
+                                        ' matches to work out teams that have been knocked out.');
+                        }
                         return team_knocked_out;
                     },
                     next_match: function() {
