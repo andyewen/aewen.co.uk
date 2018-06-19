@@ -34,6 +34,16 @@
                 margin-bottom: 8px;
             }
 
+            .match-header {
+                margin-top: 0;
+            }
+
+            .match {
+                margin-bottom: 20px;
+                border-left: 6px solid #333;
+                padding-left: 8px;
+            }
+
             .match .team {
                 margin-left: 0;
                 margin-right: 0;
@@ -70,15 +80,20 @@
                 }
             }
 
-            .group-table-container {
+            .col2 {
                 width: 50%;
                 display: inline-block;
                 box-sizing: border-box;
                 padding: 8px;
+                vertical-align: top;
+            }
+
+            .col2:blank {
+                display: none;
             }
 
             @media only screen and (max-width: 990px) {
-                .group-table-container {
+                .col2 {
                     width: 100%;
                     padding: 8px 0;
                 }
@@ -167,9 +182,6 @@
                     />
                     <div class="match-kickoff"><small>{{ formatted_kickoff_time }} ({{ tz_offset }})</small></div>
                 </template>
-                <p v-else-if="loading">
-                    loading...
-                </p>
                 <p v-else>
                     n/a
                 </p>
@@ -177,7 +189,7 @@
         </script>
 
         <script type="x-vue-template" id="group-table-template">
-            <div class="group-table-container">
+            <div class="group-table-container col2">
                 <table class="group-table">
                     <thead>
                         <tr>
@@ -223,21 +235,39 @@
             <div class="container">
                 <h1>World Cup 2018 Sweepstake</h1>
 
-                <h2 class="match-header">
-                    Next Match
-                </h2>
-                <match :match="next_match"
-                       :loading="!matches"
-                       :teams_by_code="teams_by_code"
-                       :team_code_to_person="team_code_to_person" />
-
-                <h2 class="match-header">
-                    Last Match
-                </h2>
-                <match :match="last_match"
-                       :loading="!matches"
-                       :teams_by_code="teams_by_code"
-                       :team_code_to_person="team_code_to_person" />
+                <div class="day-matches-container col2">
+                    <h2 class="match-header">
+                        Today's Matches
+                    </h2>
+                    <template v-if="todays_matches && todays_matches.matches.length">
+                        <match v-for="match in todays_matches.matches" :key="match.fifa_id"
+                            :match="match"
+                            :teams_by_code="teams_by_code"
+                            :team_code_to_person="team_code_to_person" />
+                    </template>
+                    <template v-else-if="!todays_matches">
+                        loading...
+                    </template>
+                    <template v-else>
+                        there are no matches today!
+                    </template>
+                </div><div class="day-matches-container col2">
+                    <h2 class="match-header">
+                        Next Day's Matches
+                    </h2>
+                    <template v-if="false && next_days_matches && next_days_matches.matches.length">
+                        <match v-for="match in next_days_matches.matches" :key="match.fifa_id"
+                            :match="match"
+                            :teams_by_code="teams_by_code"
+                            :team_code_to_person="team_code_to_person" />
+                    </template>
+                    <template v-else-if="false && !next_days_matches">
+                        loading...
+                    </template>
+                    <template v-else>
+                        there are no future matches!
+                    </template>
+                </div>
 
                 <h2>Players and Teams</h2>
                 <table class="player-table">
@@ -293,6 +323,11 @@
 
             function pad2(n) {
                 return (n < 10 ? "0" : "") + n;
+            }
+
+            function dateString(date) {
+                date = new Date(date);
+                return date.getFullYear() + "-" + pad2(date.getMonth() + 1) + "-" + pad2(date.getDate());
             }
 
             function product(iterables, repeat) {
@@ -678,27 +713,34 @@
                         }
                         return team_knocked_out;
                     },
-                    next_match: function() {
-                        if (this.matches) {
-                            var now = new Date();
-                            for (var i = 0; i < this.matches.length; i++) {
-                                if (this.matches[i].status != 'completed') {
-                                    return this.matches[i];
-                                }
-                            }
-                        }
-                        return null;
+                    todays_matches: function() {
+                        if (!this.matches) return null;
+
+                        var today = dateString(new Date());
+                        return {
+                            date: today,
+                            matches: this.matches.filter(function(match) {
+                                return dateString(match.datetime) == today;
+                            })
+                        };
                     },
-                    last_match: function() {
-                        if (!this.matches) { return null }
-                        var now = new Date();
-                        for (var i = 0; i < this.matches.length - 1; i++) {
-                            if (this.matches[i].status != 'completed') {
-                                if (i <= 0) { return null; }
-                                return this.matches[i - 1];
-                            }
+                    next_days_matches: function() {
+                        var self = this;
+                        if (!this.matches) return null;
+
+                        var today = dateString(new Date());
+                        for (var i = 0; i < this.matches.length; i++) {
+                            if (dateString(this.matches[i].datetime) > today) break;
                         }
-                        return this.matches[this.matches.length - 1];
+                        if (i >= this.matches.length) return null;
+
+                        var next_day = dateString(new Date(this.matches[i].datetime));
+                        return {
+                            date: next_day,
+                            matches: this.matches.filter(function(match) {
+                                return dateString(match.datetime) == next_day;
+                            })
+                        }
                     },
                     group_matches: function() {
                         var self = this;
