@@ -29,6 +29,31 @@
                 max-width: 900px;
                 margin: 0 auto;
             }
+            .match-day-selector .date {
+                display: inline-block;
+                text-align: center;
+                padding: 0 4px;
+            }
+
+            .match-day-selector button {
+                vertical-align: top;
+                background-color: #111;
+                height: 36px;
+                width: 60px;
+                border: 1px solid #333;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                cursor: pointer;
+            }
+
+            .match-day-selector button:hover {
+                background-color: #222;
+            }
+
+            .matches-container {
+                padding-top: 8px;
+            }
 
             .match-header, .groups-header {
                 margin-bottom: 8px;
@@ -257,37 +282,31 @@
             <div class="container">
                 <h1>World Cup 2018 Sweepstake</h1>
 
-                <div class="day-matches-container col2">
-                    <h2 class="match-header">
-                        Today's Matches
-                    </h2>
-                    <template v-if="todays_matches && todays_matches.matches.length">
-                        <match v-for="match in todays_matches.matches" :key="match.fifa_id"
+                <h2 class="match-header">Matches</h2>
+                <div class="match-day-selector">
+                    <button @click="selected_date = previous_date" :disabled="previous_date <= date_range.min">
+                        &lt;
+                    </button>
+                    <div class="date">
+                        <div class="month">{{ format_month(selected_date) }}</div>
+                        <div class="date">{{ format_day(selected_date) }}</div>
+                    </div>
+                    <button @click="selected_date = next_date" :disabled="next_date >= date_range.max">
+                        &gt;
+                    </button>
+                </div>
+                <div class="matches-container">
+                    <template v-if="matches_grouped_by_date && matches_grouped_by_date[selected_date]">
+                        <match v-for="match in matches_grouped_by_date[selected_date]" :key="match.fifa_id"
                             :match="match"
                             :teams_by_code="teams_by_code"
                             :team_code_to_person="team_code_to_person" />
                     </template>
-                    <template v-else-if="!todays_matches">
+                    <template v-else-if="!matches_grouped_by_date">
                         loading...
                     </template>
                     <template v-else>
-                        there are no matches today!
-                    </template>
-                </div><div class="day-matches-container col2">
-                    <h2 class="match-header">
-                        Next Day's Matches
-                    </h2>
-                    <template v-if="next_days_matches && next_days_matches.matches.length">
-                        <match v-for="match in next_days_matches.matches" :key="match.fifa_id"
-                            :match="match"
-                            :teams_by_code="teams_by_code"
-                            :team_code_to_person="team_code_to_person" />
-                    </template>
-                    <template v-else-if="!next_days_matches">
-                        loading...
-                    </template>
-                    <template v-else>
-                        there are no future matches!
+                        there are no matches on the selected day!
                     </template>
                 </div>
 
@@ -501,7 +520,8 @@
                         teams: teams,
                         people: people,
                         group_match_pivot: new Date('2018-06-28T22:00Z'),
-                        matches: null
+                        matches: null,
+                        selected_date: dateString(new Date())
                     }
                 },
                 created: function() {
@@ -557,6 +577,15 @@
                             home_stats.goals_conceded += match.away_team.goals;
                             away_stats.goals_conceded += match.home_team.goals;
                         });
+                    },
+                    format_day: function(d) {
+                        return pad2(new Date(d).getDate());
+                    },
+                    format_month: function(d) {
+                        return [
+                            'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                            'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+                        ][new Date(d).getMonth()]
                     }
                 },
                 computed: {
@@ -734,6 +763,48 @@
                                         ' matches to work out teams that have been knocked out.');
                         }
                         return team_knocked_out;
+                    },
+                    matches_grouped_by_date: function() {
+                        if (!this.matches) return null;
+
+                        var today_date_string = dateString(new Date());
+                        var days = {};
+                        // Always include today even if there are no matches today.
+                        days[today_date_string] = [];
+
+                        this.matches.forEach(function(match) {
+                            var match_date_string = dateString(new Date(match.datetime));
+                            if (!(match_date_string in days)) {
+                                days[match_date_string] = [match];
+                            } else {
+                                days[match_date_string].push(match);
+                            }
+                        });
+
+                        return days;
+                    },
+                    next_date: function() {
+                        var date = new Date(this.selected_date);
+                        date.setDate(date.getDate() + 1);
+                        return dateString(date);
+                    },
+                    previous_date: function() {
+                        var date = new Date(this.selected_date);
+                        date.setDate(date.getDate() - 1);
+                        return dateString(date);
+                    },
+                    date_range: function() {
+                        if (!this.matches_grouped_by_date) return this.selected_date;
+                        var min = max = this.selected_date;
+                        for (date_string in this.matches_grouped_by_date) {
+                            if (date_string < min) {
+                                min = date_string;
+                            }
+                            if (date_string > max) {
+                                max = date_string;
+                            }
+                        }
+                        return {min: min, max: max};
                     },
                     todays_matches: function() {
                         if (!this.matches) return null;
