@@ -255,13 +255,13 @@
                     <h2 class="match-header">
                         Next Day's Matches
                     </h2>
-                    <template v-if="false && next_days_matches && next_days_matches.matches.length">
+                    <template v-if="next_days_matches && next_days_matches.matches.length">
                         <match v-for="match in next_days_matches.matches" :key="match.fifa_id"
                             :match="match"
                             :teams_by_code="teams_by_code"
                             :team_code_to_person="team_code_to_person" />
                     </template>
-                    <template v-else-if="false && !next_days_matches">
+                    <template v-else-if="!next_days_matches">
                         loading...
                     </template>
                     <template v-else>
