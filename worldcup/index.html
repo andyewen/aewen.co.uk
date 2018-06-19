@@ -44,6 +44,23 @@
                 padding-left: 8px;
             }
 
+            @keyframes in-progress-flash {
+                from {border-left-color: #333;}
+                to {border-left-color: #ccc;}
+            }
+
+            .match.in-progress {
+                animation-name: in-progress-flash;
+                animation-duration: 1s;
+                animation-direction: alternate;
+                animation-iteration-count: infinite;
+                animation-timing-function: ease-out;
+            }
+
+            .match.completed {
+                border-left-color: #ccc;
+            }
+
             .match .team {
                 margin-left: 0;
                 margin-right: 0;
@@ -161,7 +178,12 @@
         </script>
 
         <script type="x-vue-template" id="match-template">
-            <div class="match">
+            <div class="match"
+                 :class="{
+                     'in-progress': match.status == 'in progress',
+                     'completed': match.status == 'completed'
+                 }"
+            >
                 <template v-if="match">
                     <team-badge
                         :team="teams_by_code[match.home_team.code] || null"
