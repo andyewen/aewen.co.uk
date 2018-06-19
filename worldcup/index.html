@@ -284,14 +284,14 @@
 
                 <h2 class="match-header">Matches</h2>
                 <div class="match-day-selector">
-                    <button @click="selected_date = previous_date" :disabled="previous_date < date_range.min">
+                    <button @click="selected_date = previous_date" :disabled="!matches_grouped_by_date || previous_date < date_range.min">
                         &lt;
                     </button>
                     <div class="date">
                         <div class="month">{{ format_month(selected_date) }}</div>
                         <div class="date">{{ format_day(selected_date) }}</div>
                     </div>
-                    <button @click="selected_date = next_date" :disabled="next_date > date_range.max">
+                    <button @click="selected_date = next_date" :disabled="!matches_grouped_by_date || next_date > date_range.max">
                         &gt;
                     </button>
                 </div>
