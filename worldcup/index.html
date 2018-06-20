@@ -745,7 +745,7 @@
                                 possible_group_match_outcomes.forEach(function(match_results) {
                                     var group_table = {};
                                     group.teams.forEach(function(team) {
-                                        group_table[team.code] = team.points;
+                                        group_table[team.code] = team.group_stats.get_points();
                                     });
 
                                     group_future_matches.forEach(function(match, i) {
@@ -773,10 +773,12 @@
 
                                     var pos = 1,
                                         previous_row_points = group_table[0].points;
-                                    group_table.forEach(function(row) {
+                                    group_table.forEach(function(row, actual_pos) {
+                                        actual_pos++;
                                         if (row.points < previous_row_points) {
-                                            pos++;
+                                            pos = actual_pos;
                                         }
+                                        previous_row_points = row.points;
 
                                         if (
                                             !team_highest_positions[row.team] ||
