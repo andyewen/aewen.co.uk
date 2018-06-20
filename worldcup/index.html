@@ -39,16 +39,27 @@
                 vertical-align: top;
                 background-color: #111;
                 height: 36px;
-                width: 60px;
-                border: 1px solid #333;
+                width: 68px;
+                border: 1px solid #ccc;
                 text-align: center;
                 text-decoration: none;
                 display: inline-block;
                 cursor: pointer;
             }
 
+            .match-day-selector button:focus {
+                outline: none;
+            }
+
             .match-day-selector button:hover {
                 background-color: #222;
+            }
+
+            .match-day-selector button:disabled {
+                background-color: #111;
+                border-color: #333;
+                color: #333;
+                cursor: not-allowed;
             }
 
             .matches-container {
