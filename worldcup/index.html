@@ -695,9 +695,9 @@
                             group.teams.sort(function(a, b) {
                                 // Sort by points
                                 var a_points = a.group_stats.get_points(),
-                                    b_points = a.group_stats.get_points();
+                                    b_points = b.group_stats.get_points();
                                 if (a_points > b_points) return -1;
-                                if (b_points < b_points) return 1;
+                                if (a_points < b_points) return 1;
 
                                 // Then by goal difference.
                                 var a_gd = a.group_stats.get_goal_difference(),
