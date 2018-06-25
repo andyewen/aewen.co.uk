@@ -29,6 +29,16 @@
                 max-width: 900px;
                 margin: 0 auto;
             }
+
+            h1 {
+                float: left;
+            }
+
+            .countdown {
+                float: right;
+                margin-top: 21px;
+            }
+
             .match-day-selector .date {
                 display: inline-block;
                 text-align: center;
@@ -71,6 +81,7 @@
             }
 
             .match-header {
+                clear: both;
                 margin-top: 0;
             }
 
@@ -179,7 +190,7 @@
                 filter: brightness(25%)
             }
         </style>
-        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
     </head>
     <body>
         <div id="app"></div>
@@ -283,6 +294,9 @@
         <script type="x-vue-template" id="app-template">
             <div class="container">
                 <h1>World Cup 2018 Sweepstake</h1>
+                <div class="countdown hide-small">
+                    refreshing<template v-if="refreshing">...</template><template v-else> in {{ ~~time_to_refresh }}s</template>
+                </div>
 
                 <h2 class="match-header">Matches</h2>
                 <div class="match-day-selector">
@@ -536,34 +550,93 @@
                         people: people,
                         group_match_pivot: new Date('2018-06-28T22:00Z'),
                         matches: null,
-                        selected_date: dateString(new Date())
+                        selected_date: dateString(new Date()),
+                        local_storage_key: 'worldcup2018',
+                        refresh_interval: 15 * 1000,
+                        last_refreshed_at: null,
+                        time_to_refresh: null,
+                        refreshing: false
                     }
                 },
                 created: function() {
-                    var self = this,
-                        req = new XMLHttpRequest();
-                    req.addEventListener("load", function(e) {
-                        self.load_matches(JSON.parse(this.responseText));
-                    });
-                    req.open("GET", "https://world-cup-json.herokuapp.com/matches/?by_date=asc");
-                    req.send();
+                    var self = this;
+                    var data = self.load_local_storage();
+                    var now = new Date();
+                    var refresh_timeout;
+
+                    if (data) {
+                        self.load_matches(data.matches);
+
+                        self.last_refreshed_at = new Date(data.last_refreshed_at)
+
+                        var time_since_refresh = now - self.last_refreshed_at;
+                        refresh_timeout = Math.max(0, self.refresh_interval - time_since_refresh);
+                    } else {
+                        refresh_timeout = 0;
+                    }
+                    window.setTimeout(function() { self.get_matches() }, refresh_timeout);
+                    self.update_countdown();
+                    window.setInterval(function() { self.update_countdown() }, 1000);
                 },
                 methods: {
+                    load_local_storage: function() {
+                        var json_string = window.localStorage.getItem(this.local_storage_key);
+                        if (!json_string) return null;
+                        return JSON.parse(json_string);
+                    },
+                    save_local_storage: function(data) {
+                        window.localStorage.setItem(this.local_storage_key, JSON.stringify(data));
+                    },
+                    update_countdown: function() {
+                        if (!this.last_refreshed_at) return 0;
+                        var time_to_refresh = (this.refresh_interval - (new Date() - this.last_refreshed_at)) / 1000;
+                        this.time_to_refresh = Math.ceil(time_to_refresh);
+                    },
+                    get_matches: function() {
+                        var self = this,
+                        req = new XMLHttpRequest();
+                        req.addEventListener("load", function(e) {
+                            var matches = JSON.parse(this.responseText).sort(function(a, b) {
+                                if (!a.datetime && !b.datetime) return 0;
+                                if (!a.datetime) return 1;
+                                if (!b.datetime) return -1;
+
+                                var a = new Date(a.datetime),
+                                    b = new Date(b.datetime);
+                                if (a < b) return -1;
+                                if (a > b) return 1;
+                                return 0;
+                            });
+                            if (JSON.stringify(matches) !== JSON.stringify(self.matches)) {
+                                self.load_matches(matches);
+                            } else {
+                                console.log("Match data hasn't changed, not loading");
+                            }
+
+                            self.last_refreshed_at = new Date();
+                            self.update_countdown();
+                            self.save_local_storage({
+                                last_refreshed_at: self.last_refreshed_at.toISOString(),
+                                matches: self.matches
+                            });
+
+                            window.setTimeout(function() {
+                                self.get_matches();
+                            }, self.refresh_interval);
+
+                            self.refreshing = false;
+                        });
+                        req.open("GET", "https://world-cup-json.herokuapp.com/matches/?by_date=asc");
+                        req.send();
+
+                        this.refreshing = true;
+                    },
                     load_matches: function(matches) {
                         var self = this;
-                        self.matches = matches.sort(function(a, b) {
-                            if (!a.datetime && !b.datetime) return 0;
-                            if (!a.datetime) return 1;
-                            if (!b.datetime) return -1;
 
-                            var a = new Date(a.datetime),
-                                b = new Date(b.datetime);
-                            if (a < b) return -1;
-                            if (a > b) return 1;
-                            return 0;
-                        });
+                        self.matches = matches;
 
-                        var completed_matches = this.matches.filter(function(m) {
+                        var completed_matches = self.matches.filter(function(m) {
                             return m.status == 'completed';
                         });
 
