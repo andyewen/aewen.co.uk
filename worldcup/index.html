@@ -613,16 +613,19 @@
                 },
                 computed: {
                     people_with_teams_and_stats: function() {
-                        var teams_by_code = {};
-                        this.teams.forEach(function(team) {
-                            teams_by_code[team.code] = team;
-                        });
+                        var self = this;
 
-                        var people = this.people.map(function(person) {
+                        var people = self.people.map(function(person) {
                             return {
                                 'name': person.name,
                                 'teams': person.teams.map(function(team_code) {
-                                    return teams_by_code[team_code];
+                                    return self.teams_by_code[team_code];
+                                }).sort(function(a, b) {
+                                    var a_knocked_out = self.team_knocked_out[a.code],
+                                        b_knocked_out = self.team_knocked_out[b.code];
+                                    if (a_knocked_out == b_knocked_out) return 0;
+                                    if (!a_knocked_out) return -1;
+                                    if (!b_knocked_out) return 1;
                                 })
                             }
                         });
@@ -648,12 +651,21 @@
                         return people;
                     },
                     unallocated_teams: function() {
-                        var allocated_team_codes = this.people.map(function(person) {
+                        var self = this;
+                        var allocated_team_codes = self.people.map(function(person) {
                             return person.teams;
                         }).reduce(function(a, b) { return a.concat(b); }, []);
-                        return result =  this.teams.filter(function(team) {
+                        var unallocated_teams = self.teams.filter(function(team) {
                             return allocated_team_codes.indexOf(team.code) == -1;
                         });
+                        unallocated_teams.sort(function(a, b) {
+                            var a_knocked_out = self.team_knocked_out[a.code],
+                                b_knocked_out = self.team_knocked_out[b.code];
+                            if (a_knocked_out == b_knocked_out) return 0;
+                            if (!a_knocked_out) return -1;
+                            if (!b_knocked_out) return 1;
+                        });
+                        return unallocated_teams;
                     },
                     teams_by_code: function() {
                         var teams = {};
