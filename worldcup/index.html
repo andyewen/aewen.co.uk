@@ -825,8 +825,6 @@
 
                         var today_date_string = dateString(new Date());
                         var days = {};
-                        // Always include today even if there are no matches today.
-                        days[today_date_string] = [];
 
                         this.matches.forEach(function(match) {
                             var match_date_string = dateString(new Date(match.datetime));
