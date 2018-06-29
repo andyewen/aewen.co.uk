@@ -336,7 +336,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <div class="unallocated-teams">
+                <div v-if="unallocated_teams.length" class="unallocated-teams">
                     <team-badge v-for="team in unallocated_teams":key="team.code"
                         :team="team" :show_person="false" :knocked_out="team_knocked_out[team.code]"
                         class="team-spaced"
@@ -526,9 +526,9 @@
                         new Person('John M.',       ['CRC', 'NGA']),
                         new Person('Patrick G.',    ['AUS', 'ESP']),
                         new Person('Ryan S.',       ['JPN', 'KOR']),
-                        new Person('Sam D.',        ['EGY', 'POR']),
-                        new Person('Sam W.',        ['RUS', 'URU']),
-                        new Person('Scott B.',      ['MAR', 'KSA'])
+                        new Person('Sam D.',        ['ENG', 'EGY', 'POR']),
+                        new Person('Sam W.',        ['BEL', 'RUS', 'URU']),
+                        new Person('Scott B.',      ['ARG', 'MAR', 'KSA'])
                     ];
 
                     return {
