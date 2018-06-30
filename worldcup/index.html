@@ -331,8 +331,8 @@
                                     class="team-spaced"
                                 />
                             </td>
-                            <td class="hide-small">{{ person.total_tournament_wins }}</td>
-                            <td class="hide-small">{{ person.competing_team_count }}</td>
+                            <td class="hide-small">{{ loaded_matches ? person.total_tournament_wins : '?' }}</td>
+                            <td class="hide-small">{{ loaded_matches ? person.competing_team_count : '?' }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -346,7 +346,7 @@
                 <h2 class="groups-header">Groups</h2>
                 <group-table v-for="group in groups":key="group.code"
                             :group="group" :teams_by_code="teams_by_code" :team_code_to_person="team_code_to_person"
-                            :team_knocked_out="team_knocked_out" :loaded_matches="Boolean(matches)"/>
+                            :team_knocked_out="team_knocked_out" :loaded_matches="loaded_matches"/>
 
                 <p><strong>Good luck!</strong> 🤑</p>
             </div>
@@ -871,6 +871,9 @@
                             }
                         }
                         return {min: min, max: max};
+                    },
+                    loaded_matches: function() {
+                        return Boolean(this.matches);
                     },
                     todays_matches: function() {
                         if (!this.matches) return null;
