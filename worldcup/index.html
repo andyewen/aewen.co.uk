@@ -32,6 +32,10 @@
                 padding: 0 4px;
             }
 
+            .match-day-selector .date.is-today {
+                font-weight: bold;
+            }
+
             .match-day-selector button {
                 vertical-align: top;
                 background-color: #111;
@@ -306,9 +310,9 @@
                     <button @click="select_previous_date" :disabled="!can_select_previous_date">
                         &lt;
                     </button>
-                    <div class="date">
+                    <div class="date" :class="{'is-today': selected_date == today}">
                         <div class="month">{{ format_month(selected_date) }}</div>
-                        <div class="date">{{ format_day(selected_date) }}</div>
+                        <div class="day">{{ format_day(selected_date) }}</div>
                     </div>
                     <button @click="select_next_date" :disabled="!can_select_next_date">
                         &gt;
@@ -551,12 +555,15 @@
                         new Person('Scott B.',      ['ARG', 'MAR', 'KSA'])
                     ];
 
+                    var today = dateString(new Date());
+
                     return {
                         teams: teams,
                         people: people,
                         group_match_pivot: new Date('2018-06-28T22:00Z'),
                         matches: null,
-                        selected_date: dateString(new Date())
+                        today: today,
+                        selected_date: today
                     }
                 },
                 created: function() {
@@ -861,7 +868,6 @@
                     matches_grouped_by_date: function() {
                         if (!this.matches) return null;
 
-                        var today_date_string = dateString(new Date());
                         var days = {};
 
                         this.matches.forEach(function(match) {
@@ -906,35 +912,6 @@
                     },
                     loaded_matches: function() {
                         return Boolean(this.matches);
-                    },
-                    todays_matches: function() {
-                        if (!this.matches) return null;
-
-                        var today = dateString(new Date());
-                        return {
-                            date: today,
-                            matches: this.matches.filter(function(match) {
-                                return dateString(match.datetime) == today;
-                            })
-                        };
-                    },
-                    next_days_matches: function() {
-                        var self = this;
-                        if (!this.matches) return null;
-
-                        var today = dateString(new Date());
-                        for (var i = 0; i < this.matches.length; i++) {
-                            if (dateString(this.matches[i].datetime) > today) break;
-                        }
-                        if (i >= this.matches.length) return null;
-
-                        var next_day = dateString(new Date(this.matches[i].datetime));
-                        return {
-                            date: next_day,
-                            matches: this.matches.filter(function(match) {
-                                return dateString(match.datetime) == next_day;
-                            })
-                        }
                     },
                     group_matches: function() {
                         var self = this;
