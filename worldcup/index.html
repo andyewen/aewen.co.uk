@@ -16,13 +16,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
         <link rel="shortcut icon" href="favicon.ico" />
         <style>
-            * {
-                font-family: sans-serif;
-                color: #ccc;
-            }
-
             body {
                 background-color: #111;
+                font-family: sans-serif;
+                color: #ccc;
             }
 
             .container {
@@ -38,6 +35,7 @@
             .match-day-selector button {
                 vertical-align: top;
                 background-color: #111;
+                color: #ccc;
                 height: 36px;
                 width: 68px;
                 border: 1px solid #ccc;
@@ -49,6 +47,12 @@
 
             .match-day-selector button:focus {
                 outline: none;
+                box-shadow: 0px 0px 2px 1px #999;
+            }
+
+            .match-day-selector button:active {
+                outline: none;
+                box-shadow: 0px 0px 4px 2px #999;
             }
 
             .match-day-selector button:hover {
@@ -116,6 +120,14 @@
 
             table.group-table {
                 width: 100%;
+            }
+
+            .person-row-knocked-out {
+                color: #999;
+            }
+
+            .person-row-knocked-out .person-name {
+                text-decoration: line-through;
             }
 
             @media only screen and (max-width: 500px) {
@@ -229,6 +241,11 @@
                         :person="team_code_to_person[match.away_team.code]"
                         class="team-spaced"
                     />
+                    <div v-if="show_penalties">
+                        <small class="in-progress-penalties">
+                            <strong>{{ match.home_team.penalties }} – {{ match.away_team.penalties }}</strong> on penalties
+                        </small>
+                    </div>
                     <div class="match-kickoff"><small>{{ formatted_kickoff_time }} ({{ tz_offset }})</small></div>
                 </template>
                 <p v-else>
@@ -286,14 +303,14 @@
 
                 <h2 class="match-header">Matches</h2>
                 <div class="match-day-selector">
-                    <button @click="selected_date = previous_date" :disabled="!matches_grouped_by_date || previous_date < date_range.min">
+                    <button @click="select_previous_date" :disabled="!can_select_previous_date">
                         &lt;
                     </button>
                     <div class="date">
                         <div class="month">{{ format_month(selected_date) }}</div>
                         <div class="date">{{ format_day(selected_date) }}</div>
                     </div>
-                    <button @click="selected_date = next_date" :disabled="!matches_grouped_by_date || next_date > date_range.max">
+                    <button @click="select_next_date" :disabled="!can_select_next_date">
                         &gt;
                     </button>
                 </div>
@@ -323,8 +340,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="person in people_with_teams_and_stats">
-                            <td class="player">{{ person.name }}</td>
+                        <tr v-for="person in people_with_teams_and_stats" :class="{'person-row-knocked-out': person.competing_team_count < 1}">
+                            <td class="person-name">{{ person.name }}</td>
                             <td>
                                 <team-badge v-for="team in person.teams" :key="team.code"
                                     :team="team" :show_person="false" :knocked_out="team_knocked_out[team.code]"
@@ -455,6 +472,9 @@
                     show_scores: function() {
                         if (!this.match) { return false; }
                         return this.match.status == 'in progress' || this.match.status == 'completed'
+                    },
+                    show_penalties: function() {
+                        return this.show_scores && (this.match.home_team.penalties + this.match.away_team.penalties) > 0;
                     },
                     formatted_kickoff_time: function() {
                         if (!this.match) { return null; }
@@ -609,6 +629,12 @@
                             'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
                             'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
                         ][new Date(d).getMonth()]
+                    },
+                    select_next_date: function() {
+                        if (this.can_select_next_date) this.selected_date = this.next_date;
+                    },
+                    select_previous_date: function() {
+                        if (this.can_select_previous_date) this.selected_date = this.previous_date;
                     }
                 },
                 computed: {
@@ -871,6 +897,12 @@
                             }
                         }
                         return {min: min, max: max};
+                    },
+                    can_select_next_date: function() {
+                        return this.matches_grouped_by_date && this.next_date <= this.date_range.max;
+                    },
+                    can_select_previous_date: function() {
+                        return this.matches_grouped_by_date && this.previous_date >= this.date_range.min;
                     },
                     loaded_matches: function() {
                         return Boolean(this.matches);
