@@ -582,10 +582,10 @@
                                 var home_stats = home_team[stats_key];
                                 var away_stats = away_team[stats_key];
 
-                                if (match.home_team.goals > match.away_team.goals) {
+                                if (match.winner_code == home_team.code) {
                                     home_stats.wins++;
                                     away_stats.losses++;
-                                } else if (match.home_team.goals < match.away_team.goals) {
+                                } else if (match.winner_code == away_team.code) {
                                     home_stats.losses++;
                                     away_stats.wins++;
                                 } else {
