@@ -645,21 +645,58 @@
                     }
                 },
                 computed: {
+                    tournament_complete: function() {
+                        return true;
+                        if (!this.matches) return null;
+
+                        for (var i = 0; i < this.matches.length; i++) {
+                            if (this.matches[i].status != 'completed') {
+                                return false;
+                            }
+                        }
+                        return true;
+                    },
+                    top_three_teams: function() {
+                        return ['ENG', 'BEL', 'CRO'];
+                        if (!this.matches) return null;
+
+                        var final_match = this.matches[this.matches.length - 1];
+                        var third_place_match = this.matches[this.matches.length - 2];
+
+                        return [
+                            final_match.winner_code,
+                            final_match.home_team.code == final_match.winner_code ? final_match.home_team.code : final_match.away_team.code,
+                            third_place_match.winner_code
+                        ];
+                    },
                     people_with_teams_and_stats: function() {
                         var self = this;
 
                         var people = self.people.map(function(person) {
+                            var teams = person.teams.map(function(team_code) {
+                                return self.teams_by_code[team_code];
+                            }).sort(function(a, b) {
+                                var a_knocked_out = self.team_knocked_out[a.code],
+                                    b_knocked_out = self.team_knocked_out[b.code];
+                                if (a_knocked_out == b_knocked_out) return 0;
+                                if (!a_knocked_out) return -1;
+                                if (!b_knocked_out) return 1;
+                            });
+
+                            var final_place = 4;
+                            if (self.tournament_complete) {
+                                for (var i = 0; i < self.top_three_teams.length; i++) {
+                                    if (person.teams.indexOf(self.top_three_teams[i]) >= 0) {
+                                        final_place = i + 1;
+                                        break;
+                                    }
+                                }
+                            }
+
                             return {
                                 'name': person.name,
-                                'teams': person.teams.map(function(team_code) {
-                                    return self.teams_by_code[team_code];
-                                }).sort(function(a, b) {
-                                    var a_knocked_out = self.team_knocked_out[a.code],
-                                        b_knocked_out = self.team_knocked_out[b.code];
-                                    if (a_knocked_out == b_knocked_out) return 0;
-                                    if (!a_knocked_out) return -1;
-                                    if (!b_knocked_out) return 1;
-                                })
+                                'teams': teams,
+                                'final_place': final_place
                             }
                         });
 
@@ -673,6 +710,9 @@
                         });
 
                         people.sort(function(a, b) {
+                            if (a.final_place < b.final_place) return -1;
+                            if (a.final_place > b.final_place) return 1;
+
                             if (a.competing_team_count > b.competing_team_count) return -1;
                             if (a.competing_team_count < b.competing_team_count) return 1;
 
