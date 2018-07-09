@@ -134,6 +134,22 @@
                 text-decoration: line-through;
             }
 
+            .prize {
+                font-weight: bold;
+            }
+
+            .final-place-1 .prize {
+                color: gold;
+            }
+
+            .final-place-2 .prize {
+                color: silver;
+            }
+
+            .final-place-3 .prize {
+                color: #8a4c00;
+            }
+
             @media only screen and (max-width: 500px) {
                 .hide-small {
                     display: none;
@@ -341,10 +357,11 @@
                             <th>Teams</th>
                             <th class="hide-small">Wins</th>
                             <th class="hide-small">Teams Left</th>
+                            <th v-if="tournament_complete">Prize</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="person in people_with_teams_and_stats" :class="{'person-row-knocked-out': person.competing_team_count < 1}">
+                        <tr v-for="person in people_with_teams_and_stats" :class="{'person-row-knocked-out': person.competing_team_count < 1}" :class="[tournament_complete ? 'final-place-' + person.final_place : '']">
                             <td class="person-name">{{ person.name }}</td>
                             <td>
                                 <team-badge v-for="team in person.teams" :key="team.code"
@@ -354,6 +371,19 @@
                             </td>
                             <td class="hide-small">{{ loaded_matches ? person.total_tournament_wins : '?' }}</td>
                             <td class="hide-small">{{ loaded_matches ? person.competing_team_count : '?' }}</td>
+                            <td v-if="tournament_complete" class="prize">
+                                <template v-if="loaded_matches">
+                                    <template v-if="person.prize">
+                                        £{{ person.prize }}
+                                    </template>
+                                    <template v-else>
+                                        —
+                                    </template>
+                                </template>
+                                <template v-else>
+                                    ?
+                                </template>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -646,7 +676,6 @@
                 },
                 computed: {
                     tournament_complete: function() {
-                        return true;
                         if (!this.matches) return null;
 
                         for (var i = 0; i < this.matches.length; i++) {
@@ -657,7 +686,6 @@
                         return true;
                     },
                     top_three_teams: function() {
-                        return ['ENG', 'BEL', 'CRO'];
                         if (!this.matches) return null;
 
                         var final_match = this.matches[this.matches.length - 1];
@@ -683,20 +711,23 @@
                                 if (!b_knocked_out) return 1;
                             });
 
+                            var prize_amounts = [40, 10, 5];
                             var final_place = 4;
+                            var prize = 0;
                             if (self.tournament_complete) {
                                 for (var i = 0; i < self.top_three_teams.length; i++) {
                                     if (person.teams.indexOf(self.top_three_teams[i]) >= 0) {
-                                        final_place = i + 1;
-                                        break;
+                                        final_place = Math.min(final_place, i + 1);
+                                        prize += prize_amounts[i];
                                     }
                                 }
                             }
 
                             return {
-                                'name': person.name,
-                                'teams': teams,
-                                'final_place': final_place
+                                name: person.name,
+                                teams: teams,
+                                final_place: final_place,
+                                prize: prize
                             }
                         });
 
