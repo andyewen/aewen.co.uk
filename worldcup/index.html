@@ -602,7 +602,7 @@
                     req.addEventListener("load", function(e) {
                         self.load_matches(JSON.parse(this.responseText));
                     });
-                    req.open("GET", "https://world-cup-json.herokuapp.com/matches/?by_date=asc");
+                    req.open("GET", "https://world-cup-json-2018.herokuapp.com/matches/?by_date=asc");
                     req.send();
                 },
                 methods: {
