@@ -620,6 +620,24 @@
                             return 0;
                         });
 
+                        // Clamp selected date inside tournament date range.
+                        if (self.matches.length) {
+                            var first_date = self.matches[0].datetime;
+                            var last_date = self.matches[self.matches.length - 1].datetime;
+                            if (first_date) {
+                                first_date = dateString(first_date);
+                                if (self.selected_date < first_date) { 
+                                    self.selected_date = first_date; 
+                                }
+                            }
+                            if (last_date) {
+                                last_date = dateString(last_date);
+                                if (self.selected_date > last_date) { 
+                                    self.selected_date = last_date; 
+                                }
+                            }
+                        }
+
                         var completed_matches = this.matches.filter(function(m) {
                             return m.status == 'completed';
                         });
