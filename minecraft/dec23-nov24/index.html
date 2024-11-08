@@ -53,6 +53,8 @@
         </div>
     </div>
     <script>
+        // world seed: 991563428104504970
+        // command for initial view: /tp @p 30.5 71 27.5 0 0
         var viewer = pannellum.viewer(
             'panorama',  
             {
@@ -94,10 +96,10 @@
         );
 
         document.getElementById('before').addEventListener('click', () => {
-            viewer.loadScene('before', viewer.getPitch(), viewer.getYaw());
+            viewer.loadScene('before', viewer.getPitch(), viewer.getYaw(), viewer.getHfov());
         });
         document.getElementById('after').addEventListener('click', () => {
-            viewer.loadScene('after', viewer.getPitch(), viewer.getYaw());
+            viewer.loadScene('after', viewer.getPitch(), viewer.getYaw(), viewer.getHfov());
         });
         document.getElementById('fullscreen').addEventListener('click', () => {
             viewer.toggleFullscreen();
