@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft server: Dec 23 -> Nov 24</title>
+    <link rel="stylesheet" href="pannellum.css">
+    <script src="pannellum.js"></script>
+    <style>
+        html {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            position: fixed;
+            cursor: default;
+            width: 100%;
+            height: 100%;
+        }
+        #controls {
+            position: absolute;
+            bottom: 0;
+            z-index: 2;
+            text-align: center;
+            width: 100%;
+            padding-bottom: 3px;
+            pointer-events: none;
+        }
+        .ctrl {
+            padding: 8px 5px;
+            width: 80px;
+            text-align: center;
+            background: rgba(200, 200, 200, 0.8);
+            display: inline-block;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        .ctrl:hover {
+            background: rgba(200, 200, 200, 1);
+        }
+    </style>
+</head>
+<body>
+    <div id="panorama">
+        <div id="controls">
+            <div class="ctrl" id="before">Before</div>
+            <div class="ctrl" id="after">After</div>
+            <div class="ctrl" id="fullscreen">&#x2922;</div>
+        </div>
+    </div>
+    <script>
+        // world seed: 991563428104504970
+        // command for initial view: /tp @p 30.5 71 27.5 0 0
+        var viewer = pannellum.viewer(
+            'panorama',  
+            {
+                "default": {
+                    "firstScene": "before",
+                    "author": "Andrew Ewen",
+                    "title": "Minecraft server: Nov 24 -> Dec 25",
+                    "sceneFadeDuration": 1500,
+                    "pitch": -10,
+                    "yaw": -100,
+                    "showControls": false,
+                    "autoLoad": true
+                },
+                "scenes": {
+                    "before": {
+                        "type": "cubemap",
+                        "cubeMap": [
+                            "./panoramas/before/face0.png",
+                            "./panoramas/before/face1.png",
+                            "./panoramas/before/face2.png",
+                            "./panoramas/before/face3.png",
+                            "./panoramas/before/face4.png",
+                            "./panoramas/before/face5.png"
+                        ]
+                    },
+                    "after": {
+                        "type": "cubemap",
+                        "cubeMap": [
+                            "./panoramas/after/face0.png",
+                            "./panoramas/after/face1.png",
+                            "./panoramas/after/face2.png",
+                            "./panoramas/after/face3.png",
+                            "./panoramas/after/face4.png",
+                            "./panoramas/after/face5.png"
+                        ]
+                    }
+                }
+            }
+        );
+
+        document.getElementById('before').addEventListener('click', () => {
+            viewer.loadScene('before', viewer.getPitch(), viewer.getYaw(), viewer.getHfov());
+        });
+        document.getElementById('after').addEventListener('click', () => {
+            viewer.loadScene('after', viewer.getPitch(), viewer.getYaw(), viewer.getHfov());
+        });
+        document.getElementById('fullscreen').addEventListener('click', () => {
+            viewer.toggleFullscreen();
+        });
+    </script>
+</body>
+</html>
